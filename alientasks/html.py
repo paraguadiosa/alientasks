@@ -63,7 +63,7 @@ body::after {
 ::-webkit-scrollbar-thumb:hover { background: #1f8a4c; }
 html { scrollbar-color: #123f1f #040804; }
 .app {
-  max-width: 44rem;
+  max-width: 100%;
   margin: 0 auto;
   padding: var(--space-4);
 }
@@ -83,13 +83,9 @@ html { scrollbar-color: #123f1f #040804; }
 }
 .list-nav {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   gap: var(--space-2);
   margin-bottom: var(--space-5);
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
-  padding-bottom: var(--space-2);
 }
 .list-nav__item {
   display: inline-flex;
@@ -102,8 +98,6 @@ html { scrollbar-color: #123f1f #040804; }
   color: var(--color-muted);
   text-decoration: none;
   font-size: 0.95rem;
-  white-space: nowrap;
-  flex-shrink: 0;
   transition: border-color 0.2s, color 0.2s;
 }
 .list-nav__item:hover {
@@ -117,12 +111,26 @@ html { scrollbar-color: #123f1f #040804; }
   text-shadow: var(--glow);
 }
 .list-nav__count { font-variant-numeric: tabular-nums; }
-.task-group { margin: 0 0 var(--space-5); }
+main {
+  display: flex;
+  gap: var(--space-4);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x mandatory;
+  padding-bottom: var(--space-4);
+}
+.task-group {
+  flex: 0 0 min(85vw, 22rem);
+  scroll-snap-align: start;
+  margin: 0;
+}
 .task-group__title {
   font-size: 1.1rem;
   margin: 0 0 var(--space-3);
   color: var(--color-accent);
   text-shadow: var(--glow);
+  position: sticky;
+  top: 0;
 }
 .task-list {
   list-style: none;
