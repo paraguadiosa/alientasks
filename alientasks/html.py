@@ -83,9 +83,13 @@ html { scrollbar-color: #123f1f #040804; }
 }
 .list-nav {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: var(--space-2);
   margin-bottom: var(--space-5);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  padding-bottom: var(--space-2);
 }
 .list-nav__item {
   display: inline-flex;
@@ -98,6 +102,8 @@ html { scrollbar-color: #123f1f #040804; }
   color: var(--color-muted);
   text-decoration: none;
   font-size: 0.95rem;
+  white-space: nowrap;
+  flex-shrink: 0;
   transition: border-color 0.2s, color 0.2s;
 }
 .list-nav__item:hover {
