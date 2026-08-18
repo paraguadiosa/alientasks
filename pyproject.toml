@@ -1,0 +1,35 @@
+[project]
+name = "alientasks"
+version = "0.1.0"
+description = "MVP web UI for a self-hosted CalDAV task list."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "ruff>=0.6",
+]
+
+[project.scripts]
+alientasks = "alientasks.server:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["alientasks*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--cov=alientasks --cov-report=term-missing --cov-fail-under=80"
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
