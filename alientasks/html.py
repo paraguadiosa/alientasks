@@ -9,6 +9,18 @@ from alientasks.ical import Task, group_by_category
 
 ALL_LIST = ""
 
+FAVICON_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <rect x="24" y="14" width="52" height="72" rx="8" fill="none"
+        stroke="#00ff41" stroke-width="7"/>
+  <rect x="38" y="6" width="24" height="14" rx="5" fill="none"
+        stroke="#00ff41" stroke-width="7"/>
+  <path d="M36 42 l7 7 l14 -14" fill="none" stroke="#00ff41"
+        stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M36 62 l7 7 l14 -14" fill="none" stroke="#00ff41"
+        stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+"""
+
 STYLE = """
 :root {
   --color-surface: #040804;
@@ -380,6 +392,7 @@ def render_page(
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Alientasks</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <meta name="color-scheme" content="dark light">
   <style>{STYLE}</style>
   <script>{HEAD_SCRIPT}</script>

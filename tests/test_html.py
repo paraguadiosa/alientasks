@@ -67,6 +67,11 @@ def test_render_page_includes_light_theme_support():
     assert 'aria-pressed="false"' in page
 
 
+def test_render_page_includes_favicon_link():
+    page = render_page([], "")
+    assert '<link rel="icon" type="image/svg+xml" href="/favicon.svg">' in page
+
+
 def test_render_page_empty_and_error():
     empty = render_page([], "")
     assert "No tasks in Radicale." in empty
