@@ -58,6 +58,15 @@ def test_render_page_filters_one_list_and_unknown_falls_back():
     assert "Hide me" in fallback
 
 
+def test_render_page_includes_light_theme_support():
+    page = render_page([], "")
+    assert '[data-theme="light"]' in page
+    assert 'class="theme-toggle"' in page
+    assert 'name="color-scheme"' in page
+    assert "alientasks-theme" in page
+    assert 'aria-pressed="false"' in page
+
+
 def test_render_page_empty_and_error():
     empty = render_page([], "")
     assert "No hay tareas en Radicale." in empty

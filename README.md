@@ -17,6 +17,13 @@ Open http://127.0.0.1:5233/
 
 Systemd user unit: `alientasks.service` (localhost only).
 
+## Themes
+
+Dark phosphor (default) and a Solarized-style light theme. The header button
+toggles the theme and stores the choice in `localStorage`. Without a stored
+choice, the page follows `prefers-color-scheme`. All light-theme text colors
+meet WCAG 2.2 AA contrast (>= 4.5:1).
+
 ## Flags
 
 - `--host` / `TASKS_UI_HOST` (default `127.0.0.1`)
