@@ -87,7 +87,7 @@ class TasksHandler(BaseHTTPRequestHandler):
         current = form.get("list", ALL_LIST)
         completed = form.get("completed") == "1"
         if not is_safe_href(href, self.client.collection):
-            self._html(400, [], current, "Enlace de tarea no valido.")
+            self._html(400, [], current, "Invalid task link.")
             return
         try:
             self.client.toggle(href, completed, now_utc())
