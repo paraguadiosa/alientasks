@@ -117,6 +117,16 @@ def test_get_ok_and_404_and_503():
     assert b"down" in rec.wfile.getvalue()
 
 
+def test_get_favicon():
+    rec = Recorder(DummyClient(), "/favicon.svg")
+    rec.handle()
+    assert ("status", 200) in rec.sent
+    headers = dict(rec.sent[-1][1])
+    assert headers["Content-Type"] == "image/svg+xml"
+    assert b"svg" in rec.wfile.getvalue()
+    assert b"#00ff41" in rec.wfile.getvalue()
+
+
 def test_post_toggle_redirects(monkeypatch):
     fixed = datetime(2026, 8, 18, 23, 40, tzinfo=UTC)
     monkeypatch.setattr("alientasks.server.now_utc", lambda: fixed)

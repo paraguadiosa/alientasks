@@ -10,7 +10,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
 from alientasks.caldav import CaldavClient, CaldavError, is_safe_href
-from alientasks.html import ALL_LIST, redirect_location, render_page
+from alientasks.html import ALL_LIST, FAVICON_SVG, redirect_location, render_page
 
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 5233
@@ -65,6 +65,9 @@ class TasksHandler(BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:
         parsed = urlparse(self.path)
+        if parsed.path == "/favicon.svg":
+            self._send(200, FAVICON_SVG.encode(), "image/svg+xml")
+            return
         if parsed.path != "/":
             self._send(404, b"Not found\n", "text/plain; charset=utf-8")
             return
