@@ -115,14 +115,17 @@ main {
   display: flex;
   gap: var(--space-4);
   overflow-x: auto;
+  overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
   scroll-snap-type: x mandatory;
-  padding-bottom: var(--space-4);
+  height: calc(100vh - 10rem);
 }
 .task-group {
   flex: 0 0 min(85vw, 22rem);
   scroll-snap-align: start;
   margin: 0;
+  overflow-y: auto;
+  height: 100%;
 }
 .task-group__title {
   font-size: 1.1rem;
@@ -131,6 +134,9 @@ main {
   text-shadow: var(--glow);
   position: sticky;
   top: 0;
+  background: var(--color-surface);
+  padding: var(--space-2) 0;
+  z-index: 1;
 }
 .task-list {
   list-style: none;
