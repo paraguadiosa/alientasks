@@ -40,9 +40,9 @@ def test_render_page_all_lists_and_escapes():
     assert "&lt;script&gt;" in page
     assert "<script>" not in page.split("<script>")[0]
     assert "Reading List" in page
-    assert "Completadas (1)" in page
+    assert "Completed (1)" in page
     assert 'aria-current="page"' in page
-    assert "2 abiertas" in page
+    assert "2 open" in page
 
 
 def test_render_page_filters_one_list_and_unknown_falls_back():
@@ -69,9 +69,9 @@ def test_render_page_includes_light_theme_support():
 
 def test_render_page_empty_and_error():
     empty = render_page([], "")
-    assert "No hay tareas en Radicale." in empty
+    assert "No tasks in Radicale." in empty
     only_done = render_page([make_task("1", "Old", "Default", COMPLETED)], "Default")
-    assert "No hay tareas abiertas." in only_done
+    assert "No open tasks." in only_done
     errored = render_page([], "", error="fallo <x>")
     assert 'role="alert"' in errored
     assert "fallo &lt;x&gt;" in errored

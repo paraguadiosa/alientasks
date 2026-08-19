@@ -252,7 +252,7 @@ document.documentElement.classList.remove("no-js");
   function apply(theme) {
     document.documentElement.setAttribute("data-theme", theme);
     toggle.setAttribute("aria-pressed", String(theme === "light"));
-    toggle.textContent = theme === "light" ? "Modo oscuro" : "Modo claro";
+    toggle.textContent = theme === "light" ? "Dark mode" : "Light mode";
   }
   apply(document.documentElement.getAttribute("data-theme") || "dark");
   toggle.addEventListener("click", function () {
@@ -295,10 +295,10 @@ def open_count(tasks: list[Task]) -> int:
 
 def render_nav(grouped: dict[str, list[Task]], current: str) -> str:
     """Render the list filter navigation."""
-    items = [("", "Todas", sum(open_count(items) for items in grouped.values()))]
+    items = [("", "All", sum(open_count(items) for items in grouped.values()))]
     for name, tasks in grouped.items():
         items.append((name, name, open_count(tasks)))
-    parts = ['<nav class="list-nav" aria-label="Listas">']
+    parts = ['<nav class="list-nav" aria-label="Lists">']
     for value, label, count in items:
         current_cls = " list-nav__item--current" if value == current else ""
         aria = ' aria-current="page"' if value == current else ""
@@ -315,7 +315,7 @@ def render_task(task: Task, current_list: str) -> str:
     """Render one task row as a form."""
     checked = " checked" if task.completed else ""
     state = " task--done" if task.completed else ""
-    done_label = "Desmarcar" if task.completed else "Completar"
+    done_label = "Reopen" if task.completed else "Complete"
     return (
         f'<li><form class="task{state}" method="post" action="/toggle">'
         f'<input type="hidden" name="href" value="{escape(task.href, quote=True)}">'
@@ -341,12 +341,12 @@ def render_group(title: str, tasks: list[Task], current_list: str) -> str:
         parts.extend(render_task(task, current_list) for task in open_tasks)
         parts.append("</ul>")
     else:
-        parts.append('<p class="empty">No hay tareas abiertas.</p>')
+        parts.append('<p class="empty">No open tasks.</p>')
     if done_tasks:
         parts.append('<details class="done-block">')
         parts.append(
             f'<summary class="done-block__summary">'
-            f"Completadas ({len(done_tasks)})</summary>"
+            f"Completed ({len(done_tasks)})</summary>"
         )
         parts.append('<ul class="task-list">')
         parts.extend(render_task(task, current_list) for task in done_tasks)
@@ -372,10 +372,10 @@ def render_page(
             render_group(name, items, current_list) for name, items in grouped.items()
         )
     else:
-        sections = '<p class="empty">No hay tareas en Radicale.</p>'
+        sections = '<p class="empty">No tasks in Radicale.</p>'
     error_html = f'<p class="alert" role="alert">{escape(error)}</p>' if error else ""
     return f"""<!DOCTYPE html>
-<html lang="es" class="no-js">
+<html lang="en" class="no-js">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -389,10 +389,10 @@ def render_page(
     <header class="app__header">
       <div>
         <h1 class="app__title">Alientasks</h1>
-        <p class="app__meta">{total_open} abiertas</p>
+        <p class="app__meta">{total_open} open</p>
       </div>
       <button type="button" class="theme-toggle" aria-pressed="false">
-        Modo claro
+        Light mode
       </button>
     </header>
     {render_nav(grouped, current_list)}
