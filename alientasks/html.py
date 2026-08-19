@@ -29,6 +29,24 @@ STYLE = """
   --font: "JetBrains Mono", "Cascadia Code", "Fira Code", Consolas,
           "Courier New", monospace;
   --glow: 0 0 6px rgba(0, 255, 65, 0.35);
+  --color-inset: #0a140a;
+  --color-hover: #0d1a0d;
+  --scanline: rgba(0, 255, 65, 0.03);
+}
+[data-theme="light"] {
+  --color-surface: #f4f7ec;
+  --color-panel: #e9efe0;
+  --color-text: #1a3c22;
+  --color-muted: #3f6b4d;
+  --color-line: #c3d4b8;
+  --color-accent: #0f6a35;
+  --color-accent-text: #f4f7ec;
+  --color-done: #4f7359;
+  --color-focus: #0f6a35;
+  --color-inset: #dde7cf;
+  --color-hover: #dfe9d2;
+  --scanline: rgba(15, 106, 53, 0.05);
+  --glow: none;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
@@ -47,27 +65,49 @@ body::after {
   z-index: 99999;
   background: repeating-linear-gradient(
     to bottom,
-    rgba(0,255,65,0.03) 0px,
-    rgba(0,255,65,0.03) 1px,
+    var(--scanline) 0px,
+    var(--scanline) 1px,
     transparent 1px,
     transparent 3px
   );
 }
 ::selection {
-  background: #00ff41;
-  color: #040804;
+  background: var(--color-accent);
+  color: var(--color-accent-text);
 }
 ::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: #040804; }
-::-webkit-scrollbar-thumb { background: #123f1f; }
-::-webkit-scrollbar-thumb:hover { background: #1f8a4c; }
-html { scrollbar-color: #123f1f #040804; }
+::-webkit-scrollbar-track { background: var(--color-surface); }
+::-webkit-scrollbar-thumb { background: var(--color-line); }
+::-webkit-scrollbar-thumb:hover { background: var(--color-muted); }
+html { scrollbar-color: var(--color-line) var(--color-surface); }
 .app {
   max-width: 100%;
   margin: 0 auto;
   padding: var(--space-4);
 }
-.app__header { margin-bottom: var(--space-4); }
+.app__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+.theme-toggle {
+  font: inherit;
+  font-size: 0.85rem;
+  border: 1px solid var(--color-line);
+  background: var(--color-panel);
+  color: var(--color-muted);
+  border-radius: 999px;
+  padding: var(--space-1) var(--space-3);
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+.theme-toggle:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+html.no-js .theme-toggle { display: none; }
 .app__title {
   font-size: clamp(1.4rem, 1.2rem + 1vw, 1.8rem);
   margin: 0 0 var(--space-1);
@@ -105,7 +145,7 @@ html { scrollbar-color: #123f1f #040804; }
   color: var(--color-text);
 }
 .list-nav__item--current {
-  background: #0a140a;
+  background: var(--color-inset);
   border-color: var(--color-accent);
   color: var(--color-accent);
   text-shadow: var(--glow);
@@ -154,7 +194,7 @@ main {
   border-bottom: 1px solid var(--color-line);
 }
 .task:last-child { border-bottom: 0; }
-.task:hover { background: #0d1a0d; }
+.task:hover { background: var(--color-hover); }
 .task__check {
   width: 1.15rem;
   height: 1.15rem;
@@ -174,7 +214,7 @@ main {
 .task__save {
   font: inherit;
   border: 1px solid var(--color-line);
-  background: #0a140a;
+  background: var(--color-inset);
   color: var(--color-muted);
   border-radius: var(--radius);
   padding: var(--space-1) var(--space-2);
@@ -197,7 +237,7 @@ html:not(.no-js) .task__save { display: none; }
   border-radius: var(--radius);
   padding: var(--space-4);
 }
-.alert { border-color: #00ff41; color: #00ff41; }
+.alert { border-color: var(--color-accent); color: var(--color-accent); }
 :focus-visible {
   outline: 2px solid var(--color-focus);
   outline-offset: 2px;
@@ -206,11 +246,38 @@ html:not(.no-js) .task__save { display: none; }
 
 SCRIPT = """
 document.documentElement.classList.remove("no-js");
+(function () {
+  var toggle = document.querySelector(".theme-toggle");
+  if (!toggle) return;
+  function apply(theme) {
+    document.documentElement.setAttribute("data-theme", theme);
+    toggle.setAttribute("aria-pressed", String(theme === "light"));
+    toggle.textContent = theme === "light" ? "Modo oscuro" : "Modo claro";
+  }
+  apply(document.documentElement.getAttribute("data-theme") || "dark");
+  toggle.addEventListener("click", function () {
+    var current = document.documentElement.getAttribute("data-theme");
+    var next = current === "light" ? "dark" : "light";
+    try { localStorage.setItem("alientasks-theme", next); } catch (e) {}
+    apply(next);
+  });
+})();
 document.querySelectorAll(".task").forEach(function (form) {
   var box = form.querySelector(".task__check");
   if (!box) return;
   box.addEventListener("change", function () { form.submit(); });
 });
+"""
+
+
+HEAD_SCRIPT = """
+(function () {
+  var theme = "";
+  try { theme = localStorage.getItem("alientasks-theme") || ""; } catch (e) {}
+  if (!theme && window.matchMedia &&
+      matchMedia("(prefers-color-scheme: light)").matches) theme = "light";
+  document.documentElement.setAttribute("data-theme", theme || "dark");
+})();
 """
 
 
@@ -313,13 +380,20 @@ def render_page(
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Alientasks</title>
+  <meta name="color-scheme" content="dark light">
   <style>{STYLE}</style>
+  <script>{HEAD_SCRIPT}</script>
 </head>
 <body>
   <div class="app">
     <header class="app__header">
-      <h1 class="app__title">Alientasks</h1>
-      <p class="app__meta">{total_open} abiertas</p>
+      <div>
+        <h1 class="app__title">Alientasks</h1>
+        <p class="app__meta">{total_open} abiertas</p>
+      </div>
+      <button type="button" class="theme-toggle" aria-pressed="false">
+        Modo claro
+      </button>
     </header>
     {render_nav(grouped, current_list)}
     <main>
