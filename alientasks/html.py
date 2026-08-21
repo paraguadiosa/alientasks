@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from html import escape
-from urllib.parse import quote, urlencode
+from urllib.parse import urlencode
 
 from alientasks.ical import Task, group_by_category
 
@@ -424,4 +424,4 @@ def redirect_location(list_name: str) -> str:
     """Return the Location header target after a toggle."""
     if not list_name:
         return "/"
-    return "/?list=" + quote(list_name)
+    return "/?" + urlencode({"list": list_name})

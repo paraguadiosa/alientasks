@@ -21,6 +21,11 @@ def test_list_href_and_redirect():
     assert redirect_location("Someday 2").startswith("/?list=")
 
 
+def test_redirect_location_encodes_like_list_href():
+    for name in ["Someday 2", "A/B", "Con & y +", "100%"]:
+        assert redirect_location(name) == list_href(name)
+
+
 def test_open_count_ignores_completed():
     tasks = [
         make_task("1", "A", "Default"),
