@@ -54,6 +54,12 @@ def test_first_category_defaults_and_splits():
     assert first_category("Proyectitos,Other") == "Proyectitos"
 
 
+def test_first_category_respects_escaped_comma():
+    assert first_category(r"A\,B,C") == "A,B"
+    # A doubled backslash is a literal backslash: the comma after it splits.
+    assert first_category(r"A\\,B") == "A\\"
+
+
 def test_parse_vtodo_reads_folded_summary():
     task = parse_vtodo("/eve/tasks/abc.ics", '"etag1"', FOLDED)
     assert task is not None
@@ -66,6 +72,26 @@ def test_parse_vtodo_reads_folded_summary():
 def test_parse_vtodo_returns_none_without_block_or_uid():
     assert parse_vtodo("/x", "", "BEGIN:VCALENDAR\nEND:VCALENDAR\n") is None
     assert parse_vtodo("/x", "", "BEGIN:VTODO\nEND:VTODO\n") is None
+
+
+def test_parse_vtodo_ignores_end_before_begin():
+    text = "END:VTODO\nBEGIN:VTODO\nUID:one\nSUMMARY:First\nEND:VTODO\n"
+    task = parse_vtodo("/x", "", text)
+    assert task is not None
+    assert task.uid == "one"
+    assert task.summary == "First"
+
+
+def test_parse_vtodo_takes_first_block():
+    text = (
+        "BEGIN:VCALENDAR\n"
+        "BEGIN:VTODO\nUID:one\nSUMMARY:First\nEND:VTODO\n"
+        "BEGIN:VTODO\nUID:two\nSUMMARY:Second\nEND:VTODO\n"
+        "END:VCALENDAR\n"
+    )
+    task = parse_vtodo("/eve/tasks/one.ics", "", text)
+    assert task is not None
+    assert task.uid == "one"
 
 
 def test_parse_vtodo_uses_uid_when_summary_missing():

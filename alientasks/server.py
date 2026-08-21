@@ -7,7 +7,7 @@ import os
 import sys
 from datetime import UTC, datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, urlparse, urlsplit
 
 from alientasks.caldav import CaldavClient, CaldavError, is_safe_href
 from alientasks.html import ALL_LIST, FAVICON_SVG, redirect_location, render_page
@@ -18,10 +18,23 @@ DEFAULT_RADICALE = "http://127.0.0.1:5232"
 DEFAULT_COLLECTION = "/eve/tasks/"
 DEFAULT_USER = "eve"
 
+MAX_BODY_BYTES = 64 * 1024
+
 
 def now_utc():
     """Return the current UTC time. Tests replace this."""
     return datetime.now(UTC)
+
+
+def same_origin(host: str, value: str | None) -> bool:
+    """True when an Origin/Referer value matches the Host header."""
+    if not value:
+        return True
+    try:
+        netloc = urlsplit(value).netloc
+    except ValueError:
+        return False
+    return bool(host) and netloc == host
 
 
 def parse_form(body: bytes) -> dict[str, str]:
@@ -84,7 +97,20 @@ class TasksHandler(BaseHTTPRequestHandler):
         if parsed.path != "/toggle":
             self._send(404, b"Not found\n", "text/plain; charset=utf-8")
             return
-        length = int(self.headers.get("Content-Length", "0") or "0")
+        origin = self.headers.get("Origin") or self.headers.get("Referer")
+        if not same_origin(self.headers.get("Host", ""), origin):
+            self._send(
+                403, b"Cross-origin request rejected\n", "text/plain; charset=utf-8"
+            )
+            return
+        try:
+            length = int(self.headers.get("Content-Length", "0") or "0")
+        except ValueError:
+            self._send(400, b"Bad Content-Length\n", "text/plain; charset=utf-8")
+            return
+        if length < 0 or length > MAX_BODY_BYTES:
+            self._send(413, b"Request body too large\n", "text/plain; charset=utf-8")
+            return
         form = parse_form(self.rfile.read(length))
         href = form.get("href", "")
         current = form.get("list", ALL_LIST)

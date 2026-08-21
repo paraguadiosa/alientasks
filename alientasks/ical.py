@@ -73,19 +73,43 @@ def parse_properties(block: str) -> dict[str, str]:
     return props
 
 
+def split_categories(raw: str) -> list[str]:
+    """Split CATEGORIES on unescaped commas, keeping RFC 5545 escapes."""
+    parts: list[str] = []
+    current: list[str] = []
+    escaped = False
+    for ch in raw:
+        if escaped:
+            current.append("\\" + ch)
+            escaped = False
+        elif ch == "\\":
+            escaped = True
+        elif ch == ",":
+            parts.append("".join(current))
+            current = []
+        else:
+            current.append(ch)
+    if escaped:
+        current.append("\\")
+    parts.append("".join(current))
+    return parts
+
+
 def first_category(raw: str) -> str:
     """Return the first CATEGORIES value, or Inbox."""
     if not raw.strip():
         return INBOX
-    return unescape_ical(raw.split(",", 1)[0]).strip() or INBOX
+    return unescape_ical(split_categories(raw)[0]).strip() or INBOX
 
 
 def parse_vtodo(href: str, etag: str, ical_text: str) -> Task | None:
     """Build a Task from one calendar resource. Return None if no VTODO."""
     unfolded = unfold_ical(ical_text)
     start = unfolded.find("BEGIN:VTODO")
-    end = unfolded.find("END:VTODO")
-    if start < 0 or end < 0:
+    if start < 0:
+        return None
+    end = unfolded.find("END:VTODO", start)
+    if end < 0:
         return None
     props = parse_properties(unfolded[start:end])
     uid = props.get("UID", "").strip()

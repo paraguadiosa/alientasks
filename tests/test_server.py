@@ -5,11 +5,13 @@ from urllib.parse import parse_qs
 from alientasks.caldav import CaldavError
 from alientasks.ical import NEEDS_ACTION, Task
 from alientasks.server import (
+    MAX_BODY_BYTES,
     TasksHandler,
     build_client,
     now_utc,
     parse_args,
     parse_form,
+    same_origin,
     selected_list,
 )
 
@@ -39,11 +41,11 @@ class DummyServer:
 
 
 class Recorder:
-    def __init__(self, client, path="/", body=b"", method="GET"):
+    def __init__(self, client, path="/", body=b"", method="GET", headers=None):
         self.body = body
         self.command = method
         self.path = path
-        self.headers = {"Content-Length": str(len(body))}
+        self.headers = {"Content-Length": str(len(body)), **(headers or {})}
         self.rfile = BytesIO(body)
         self.wfile = BytesIO()
         self.server = DummyServer(client)
@@ -153,6 +155,73 @@ def test_post_rejects_bad_href_and_unknown_path():
     rec = Recorder(DummyClient(), "/other", body=b"", method="POST")
     rec.handle()
     assert ("status", 404) in rec.sent
+
+
+def test_same_origin_matches_host():
+    assert same_origin("127.0.0.1:5233", "http://127.0.0.1:5233")
+    assert same_origin("127.0.0.1:5233", "http://127.0.0.1:5233/toggle")
+    assert not same_origin("127.0.0.1:5233", "https://evil.example")
+    assert not same_origin("127.0.0.1:5233", "null")
+    assert not same_origin("", "http://127.0.0.1:5233")
+    assert same_origin("127.0.0.1:5233", None)
+
+
+def test_post_rejects_cross_origin():
+    rec = Recorder(
+        DummyClient(),
+        "/toggle",
+        body=b"href=/eve/tasks/one.ics&completed=1",
+        method="POST",
+        headers={"Origin": "https://evil.example"},
+    )
+    rec.handle()
+    assert ("status", 403) in rec.sent
+
+    rec = Recorder(
+        DummyClient(),
+        "/toggle",
+        body=b"href=/eve/tasks/one.ics&completed=1",
+        method="POST",
+        headers={"Referer": "https://evil.example/steal.html"},
+    )
+    rec.handle()
+    assert ("status", 403) in rec.sent
+
+
+def test_post_allows_same_origin_and_toggles():
+    client = DummyClient(SAMPLE)
+    rec = Recorder(
+        client,
+        "/toggle",
+        body=b"href=/eve/tasks/one.ics&completed=1",
+        method="POST",
+        headers={"Origin": "http://127.0.0.1:5233", "Host": "127.0.0.1:5233"},
+    )
+    rec.handle()
+    assert ("status", 303) in rec.sent
+    assert client.toggled[0][0] == "/eve/tasks/one.ics"
+
+
+def test_post_rejects_oversized_or_bad_content_length():
+    rec = Recorder(
+        DummyClient(),
+        "/toggle",
+        body=b"href=x",
+        method="POST",
+        headers={"Content-Length": str(MAX_BODY_BYTES + 1)},
+    )
+    rec.handle()
+    assert ("status", 413) in rec.sent
+
+    rec = Recorder(
+        DummyClient(),
+        "/toggle",
+        body=b"href=x",
+        method="POST",
+        headers={"Content-Length": "huge"},
+    )
+    rec.handle()
+    assert ("status", 400) in rec.sent
 
 
 def test_post_toggle_error_lists_when_possible():
