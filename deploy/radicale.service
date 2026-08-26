@@ -1,0 +1,13 @@
+[Unit]
+Description=Radicale CalDAV server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=__HOME__/repos/radicale/.venv/bin/radicale --config __HOME__/.config/radicale/config
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

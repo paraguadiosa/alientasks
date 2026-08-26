@@ -43,6 +43,16 @@ def parse_form(body: bytes) -> dict[str, str]:
     return {key: values[-1] if values else "" for key, values in parsed.items()}
 
 
+def bind_notice(host: str) -> str | None:
+    """Return a warning when the UI binds to a non-loopback address."""
+    if host in {"", "localhost", "127.0.0.1", "::1"}:
+        return None
+    return (
+        f"The UI binds to {host} and has no login. "
+        "Any device that can reach this address can change your tasks."
+    )
+
+
 def selected_list(query: dict[str, list[str]]) -> str:
     """Read the list filter from a query string."""
     values = query.get("list", [])
@@ -165,6 +175,9 @@ def parse_args(argv: list[str] | None = None):
 def main(argv: list[str] | None = None) -> None:
     """Start the HTTP server."""
     args = parse_args(argv)
+    notice = bind_notice(args.host)
+    if notice:
+        print(f"WARNING: {notice}", flush=True)
     httpd = ThreadingHTTPServer((args.host, args.port), TasksHandler)
     httpd.client = build_client(args)
     print(f"Alientasks on http://{args.host}:{args.port}/", flush=True)

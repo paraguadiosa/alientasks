@@ -7,6 +7,7 @@ from alientasks.ical import NEEDS_ACTION, Task
 from alientasks.server import (
     MAX_BODY_BYTES,
     TasksHandler,
+    bind_notice,
     build_client,
     now_utc,
     parse_args,
@@ -266,6 +267,17 @@ def test_parse_args_and_build_client(monkeypatch):
     args = parse_args([])
     client = build_client(args)
     assert client._auth is not None
+
+
+def test_bind_notice_only_for_non_loopback():
+    assert bind_notice("") is None
+    assert bind_notice("localhost") is None
+    assert bind_notice("127.0.0.1") is None
+    assert bind_notice("::1") is None
+    notice = bind_notice("100.99.112.42")
+    assert notice is not None
+    assert "no login" in notice
+    assert "100.99.112.42" in notice
 
 
 def test_parse_qs_used_for_list_filter():

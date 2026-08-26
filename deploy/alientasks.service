@@ -1,0 +1,15 @@
+[Unit]
+Description=Alientasks web UI for Radicale tasks
+After=network-online.target radicale.service
+Wants=radicale.service
+
+[Service]
+Type=simple
+WorkingDirectory=__HOME__/repos/alientasks
+EnvironmentFile=__HOME__/.config/alientasks/env
+ExecStart=/usr/bin/python3 -m alientasks
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

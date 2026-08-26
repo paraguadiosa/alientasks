@@ -17,6 +17,14 @@ Open http://127.0.0.1:5233/
 
 Systemd user unit: `alientasks.service` (localhost only).
 
+## Raspberry Pi and phone sync
+
+Alientasks runs on a Raspberry Pi next to Radicale. The phone syncs
+tasks through CalDAV (DAVx5) against Radicale, not against this UI.
+See [docs/pi-and-phone.md](docs/pi-and-phone.md) for install, data
+migration and phone setup. The installer is
+`deploy/install-pi.sh`.
+
 ## Themes
 
 Dark phosphor (default) and a Solarized-style light theme. The header button

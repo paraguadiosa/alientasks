@@ -1,0 +1,13 @@
+[Unit]
+Description=alientasks via tailnet (socat __TAILSCALE_IP__:5233 -> 127.0.0.1:5233)
+After=alientasks.service
+Wants=alientasks.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/socat TCP-LISTEN:5233,bind=__TAILSCALE_IP__,fork,reuseaddr TCP:127.0.0.1:5233
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target
