@@ -19,8 +19,8 @@ python3 -m venv "$HOME/repos/radicale/.venv"
 "$HOME/repos/radicale/.venv/bin/pip" install --quiet --disable-pip-version-check \
     "Radicale==3.7.8" "bcrypt==5.0.0"
 
-mkdir -p "$HOME/.config/radicale" "$HOME/.config/systemd/user" \
-    "$HOME/.local/share/radicale/collections"
+mkdir -p "$HOME/.config/radicale" "$HOME/.config/alientasks" \
+    "$HOME/.config/systemd/user" "$HOME/.local/share/radicale/collections"
 if [ ! -f "$HOME/.config/radicale/users" ]; then
     echo "NOTE: no Radicale users file. Copy it from the old machine before login." >&2
 fi
