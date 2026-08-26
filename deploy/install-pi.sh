@@ -57,8 +57,9 @@ systemctl --user enable --now alientasks.service
 systemctl --user enable --now alientasks-tailscale.service
 loginctl enable-linger "$USER" 2>/dev/null || sudo loginctl enable-linger "$USER"
 
-# HTTPS front for the UI, best effort.
-tailscale serve --bg 5233 >/dev/null 2>&1 || \
+# HTTPS front for the UI, best effort. Needs sudo on some nodes.
+sudo tailscale serve --bg 5233 >/dev/null 2>&1 || \
+    tailscale serve --bg 5233 >/dev/null 2>&1 || \
     echo "NOTE: 'tailscale serve --bg 5233' failed. Set it up manually." >&2
 
 echo "Radicale (phone, CalDAV): http://$TAILSCALE_IP:5232/ user: eve"
