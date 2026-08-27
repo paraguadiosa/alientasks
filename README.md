@@ -27,10 +27,18 @@ migration and phone setup. The installer is
 
 ## Themes
 
-Dark phosphor (default) and a Solarized-style light theme. The header button
+Dark phosphor (default) and a Solarized-style light theme. Both use the same
+terminal look: square corners, `[ ]` / `[x]` task markers drawn in CSS,
+prompt-style `>` group headings, a blinking cursor in the title, and an
+inverse-video active list tab. The palettes are unchanged. The header button
 toggles the theme and stores the choice in `localStorage`. Without a stored
-choice, the page follows `prefers-color-scheme`. All light-theme text colors
-meet WCAG 2.2 AA contrast (>= 4.5:1).
+choice, the page follows `prefers-color-scheme`. Each theme also sets the CSS
+`color-scheme` property, so native scrollbars and form controls match. All
+light-theme text colors meet WCAG 2.2 AA contrast (>= 4.5:1).
+
+The styling stays cheap for a Raspberry Pi 3: no blur shadows on boxes, no
+filters, no transitions, and one small opacity animation that
+`prefers-reduced-motion` disables.
 
 CSS and JS live in `alientasks/static/` and are served under `/static/` with
 cache-busted URLs (`?v=` + package version) and immutable caching. A tiny
