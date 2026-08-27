@@ -128,6 +128,16 @@ class CaldavClient:
         etag, ical_text = self.get(href)
         self.put(href, etag, toggle_ical(ical_text, completed=completed, now=now))
 
+    def add(self, summary: str, category: str, now, uid: str) -> str:
+        """Create one new VTODO in the collection and return its href."""
+        from alientasks.ical import new_todo_ical
+
+        href = f"{self.collection}{uid}.ics"
+        if not is_safe_href(href, self.collection):
+            raise CaldavError("Refusing href outside the tasks collection.")
+        self.put(href, "", new_todo_ical(summary, category, now, uid))
+        return href
+
 
 def parse_report_xml(xml_text: str) -> list[Task]:
     """Parse a CalDAV multistatus REPORT into Task values."""

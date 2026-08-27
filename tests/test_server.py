@@ -3,6 +3,7 @@ from io import BytesIO
 from urllib.parse import parse_qs
 
 from alientasks.caldav import CaldavError
+from alientasks.html import MAX_CATEGORY_CHARS, MAX_SUMMARY_CHARS
 from alientasks.ical import NEEDS_ACTION, Task
 from alientasks.server import (
     MAX_BODY_BYTES,
@@ -18,12 +19,14 @@ from alientasks.server import (
 
 
 class DummyClient:
-    def __init__(self, tasks=None, error=None, toggle_error=None):
+    def __init__(self, tasks=None, error=None, toggle_error=None, add_error=None):
         self.collection = "/eve/tasks/"
         self.tasks = tasks or []
         self.error = error
         self.toggle_error = toggle_error
+        self.add_error = add_error
         self.toggled = []
+        self.added = []
 
     def list_tasks(self):
         if self.error:
@@ -34,6 +37,11 @@ class DummyClient:
         if self.toggle_error:
             raise self.toggle_error
         self.toggled.append((href, completed, now))
+
+    def add(self, summary, category, now, uid):
+        if self.add_error:
+            raise self.add_error
+        self.added.append((summary, category, now, uid))
 
 
 class DummyServer:
@@ -180,6 +188,73 @@ def test_post_toggle_redirects(monkeypatch):
     assert headers["Location"].startswith("/?list=")
     assert client.toggled[0][0] == "/eve/tasks/one.ics"
     assert client.toggled[0][1] is True
+
+
+def test_post_add_redirects(monkeypatch):
+    fixed = datetime(2026, 8, 18, 23, 40, tzinfo=UTC)
+    monkeypatch.setattr("alientasks.server.now_utc", lambda: fixed)
+    monkeypatch.setattr("alientasks.server.new_uid", lambda: "abc123")
+    client = DummyClient(SAMPLE)
+    rec = Recorder(
+        client,
+        "/add",
+        body=b"summary=Water+plants&category=Garden&list=Garden",
+        method="POST",
+    )
+    rec.handle()
+    assert ("status", 303) in rec.sent
+    headers = dict(rec.sent[-1][1])
+    assert headers["Location"] == "/?list=Garden"
+    assert client.added[0] == ("Water plants", "Garden", fixed, "abc123")
+
+
+def test_post_add_defaults_category_to_all_list(monkeypatch):
+    monkeypatch.setattr("alientasks.server.new_uid", lambda: "abc123")
+    client = DummyClient(SAMPLE)
+    rec = Recorder(client, "/add", body=b"summary=x", method="POST")
+    rec.handle()
+    assert ("status", 303) in rec.sent
+    assert client.added[0][1] == ""
+    assert dict(rec.sent[-1][1])["Location"] == "/"
+
+
+def test_post_add_requires_summary():
+    client = DummyClient(SAMPLE)
+    rec = Recorder(client, "/add", body=b"category=Garden", method="POST")
+    rec.handle()
+    assert ("status", 400) in rec.sent
+    assert b"Summary is required" in rec.wfile.getvalue()
+    assert client.added == []
+
+
+def test_post_add_rejects_oversized_fields():
+    long_summary = "x" * (MAX_SUMMARY_CHARS + 1)
+    rec = Recorder(
+        DummyClient(), "/add", body=f"summary={long_summary}".encode(), method="POST"
+    )
+    rec.handle()
+    assert ("status", 400) in rec.sent
+    assert b"Summary is too long" in rec.wfile.getvalue()
+
+    long_category = "c" * (MAX_CATEGORY_CHARS + 1)
+    rec = Recorder(
+        DummyClient(),
+        "/add",
+        body=f"summary=x&category={long_category}".encode(),
+        method="POST",
+    )
+    rec.handle()
+    assert ("status", 400) in rec.sent
+    assert b"Category is too long" in rec.wfile.getvalue()
+
+
+def test_post_add_error_lists_when_possible():
+    client = DummyClient(SAMPLE, add_error=CaldavError("read-only"))
+    rec = Recorder(client, "/add", body=b"summary=x", method="POST")
+    rec.handle()
+    assert ("status", 502) in rec.sent
+    assert b"read-only" in rec.wfile.getvalue()
+    assert b"Buy milk" in rec.wfile.getvalue()
 
 
 def test_post_rejects_bad_href_and_unknown_path():

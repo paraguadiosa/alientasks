@@ -88,6 +88,26 @@ def test_render_page_empty_and_error():
     assert "fallo &lt;x&gt;" in errored
 
 
+def test_render_page_has_add_form():
+    page = render_page([], "")
+    assert 'action="/add"' in page
+    assert 'name="summary"' in page
+    assert 'name="category"' in page
+    assert 'list="category-options"' in page
+    assert "New task" in page
+
+
+def test_add_form_prefills_category_and_lists_options():
+    page = render_page([make_task("1", "Keep", "Default")], "Default")
+    assert '<option value="Default"></option>' in page
+    assert page.count('value="Default"') == 4
+
+
+def test_add_form_escapes_attribute_values():
+    page = render_page([make_task("1", "Keep", 'A<B "x"')], 'A<B "x"')
+    assert 'value="A&lt;B &quot;x&quot;"' in page
+
+
 def test_asset_url_is_versioned():
     from alientasks import __version__
     from alientasks.html import asset_url

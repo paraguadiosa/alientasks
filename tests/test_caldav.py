@@ -119,6 +119,21 @@ def test_client_get_rejects_bad_href():
         client.get("/tmp/x.ics")
 
 
+def test_client_add_puts_new_resource():
+    opener = FakeOpener([FakeResponse(b"")])
+    client = CaldavClient("http://127.0.0.1:5232", "/eve/tasks/", opener=opener)
+    href = client.add("Water plants", "Garden", NOW, "abc123")
+    assert href == "/eve/tasks/abc123.ics"
+    request = opener.requests[0][0]
+    assert request.get_method() == "PUT"
+    assert request.full_url == "http://127.0.0.1:5232/eve/tasks/abc123.ics"
+    assert request.headers.get("If-match") is None
+    payload = request.data.decode()
+    assert "UID:abc123" in payload
+    assert "SUMMARY:Water plants" in payload
+    assert "CATEGORIES:Garden" in payload
+
+
 def test_client_put_and_toggle(monkeypatch):
     ical = "BEGIN:VTODO\nUID:one\nSTATUS:NEEDS-ACTION\nEND:VTODO\n"
     opener = FakeOpener(

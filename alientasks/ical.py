@@ -141,6 +141,37 @@ def utc_stamp(now: datetime) -> str:
     return now.strftime("%Y%m%dT%H%M%SZ")
 
 
+def escape_ical(value: str) -> str:
+    """Encode RFC 5545 TEXT escapes."""
+    return (
+        value.replace("\\", "\\\\")
+        .replace("\n", "\\n")
+        .replace(";", "\\;")
+        .replace(",", "\\,")
+    )
+
+
+def new_todo_ical(summary: str, category: str, now: datetime, uid: str) -> str:
+    """Build a fresh VTODO calendar resource for a new task."""
+    stamp = utc_stamp(now)
+    category = category.strip() or INBOX
+    lines = [
+        "BEGIN:VCALENDAR",
+        "VERSION:2.0",
+        "PRODID:-//Alientasks//EN",
+        "BEGIN:VTODO",
+        f"UID:{uid}",
+        f"DTSTAMP:{stamp}",
+        f"SUMMARY:{escape_ical(summary.strip())}",
+        f"CATEGORIES:{escape_ical(category)}",
+        f"STATUS:{NEEDS_ACTION}",
+        "SEQUENCE:0",
+        "END:VTODO",
+        "END:VCALENDAR",
+    ]
+    return "\r\n".join(lines) + "\r\n"
+
+
 def _replace_or_drop(lines: list[str], name: str, value: str | None) -> list[str]:
     """Remove NAME lines. Insert NAME:value before END:VTODO when value is set."""
     prefix = f"{name}:"

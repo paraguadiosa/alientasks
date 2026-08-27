@@ -2,9 +2,13 @@
 
 A self-hosted task list for a CalDAV VTODO collection.
 
-The page groups tasks by `CATEGORIES` and writes `STATUS` back when you tick a checkbox.
+The page groups tasks by `CATEGORIES`, writes `STATUS` back when you
+tick a checkbox, and adds new tasks with the New task form. Every
+change is a CalDAV request straight to Radicale, so the phone (DAVx5)
+sees the same tasks.
 
-This increment does not add, edit, or delete tasks.
+Tasks are created with a fresh `UID` and PUT into the collection, so
+any CalDAV client picks them up on the next sync.
 
 ## Run
 

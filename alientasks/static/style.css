@@ -186,8 +186,8 @@ main {
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
   scroll-snap-type: x mandatory;
-  height: calc(100vh - 10rem);
-  height: calc(100dvh - 10rem);
+  height: calc(100vh - 14rem);
+  height: calc(100dvh - 14rem);
 }
 
 /* Task groups */
@@ -287,6 +287,74 @@ main {
   color: var(--color-accent);
 }
 html:not(.no-js) .task__save { display: none; }
+
+/* Add-task form: a prompt-style command line */
+
+.add-task {
+  margin-bottom: var(--space-5);
+  border: 1px solid var(--color-line);
+  background: var(--color-panel);
+  border-radius: var(--radius);
+  padding: var(--space-3) var(--space-4);
+}
+.add-task__title {
+  margin: 0 0 var(--space-2);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-accent);
+  text-shadow: var(--glow);
+}
+.add-task__title::before { content: "> "; color: var(--color-muted); }
+.add-task__form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+.add-task__field {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+.add-task__field--summary { flex-basis: 22rem; }
+.add-task__prompt {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-muted);
+  white-space: pre;
+}
+.add-task__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  font: inherit;
+  color: var(--color-text);
+  background: var(--color-inset);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius);
+  padding: var(--space-2) var(--space-3);
+}
+.add-task__input:focus { border-color: var(--color-accent); }
+.add-task__input::placeholder { color: var(--color-muted); }
+.add-task__submit {
+  font: inherit;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 1px solid var(--color-accent);
+  background: var(--color-inset);
+  color: var(--color-accent);
+  border-radius: var(--radius);
+  padding: var(--space-2) var(--space-3);
+  cursor: pointer;
+}
+.add-task__submit:hover {
+  background: var(--color-accent);
+  color: var(--color-accent-text);
+}
 
 /* Completed tasks and notices */
 

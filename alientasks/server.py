@@ -5,13 +5,21 @@ from __future__ import annotations
 import argparse
 import os
 import sys
+import uuid
 from datetime import UTC, datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from importlib import resources
 from urllib.parse import parse_qs, urlparse, urlsplit
 
 from alientasks.caldav import CaldavClient, CaldavError, is_safe_href
-from alientasks.html import ALL_LIST, FAVICON_SVG, redirect_location, render_page
+from alientasks.html import (
+    ALL_LIST,
+    FAVICON_SVG,
+    MAX_CATEGORY_CHARS,
+    MAX_SUMMARY_CHARS,
+    redirect_location,
+    render_page,
+)
 
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 5233
@@ -31,6 +39,11 @@ STATIC_CACHE = "public, max-age=31536000, immutable"
 def now_utc():
     """Return the current UTC time. Tests replace this."""
     return datetime.now(UTC)
+
+
+def new_uid() -> str:
+    """Return a fresh resource id for a new task."""
+    return uuid.uuid4().hex
 
 
 def same_origin(host: str, value: str | None) -> bool:
@@ -131,38 +144,74 @@ class TasksHandler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:
         parsed = urlparse(self.path)
-        if parsed.path != "/toggle":
+        if parsed.path not in {"/toggle", "/add"}:
             self._send(404, b"Not found\n", "text/plain; charset=utf-8")
             return
+        form = self._read_form()
+        if form is None:
+            return
+        current = form.get("list", ALL_LIST)
+        if parsed.path == "/add":
+            self._add_task(form, current)
+            return
+        self._toggle_task(form, current)
+
+    def _read_form(self) -> dict[str, str] | None:
+        """Read a form body. Send an error and return None when rejected."""
         origin = self.headers.get("Origin") or self.headers.get("Referer")
         if not same_origin(self.headers.get("Host", ""), origin):
             self._send(
                 403, b"Cross-origin request rejected\n", "text/plain; charset=utf-8"
             )
-            return
+            return None
         try:
             length = int(self.headers.get("Content-Length", "0") or "0")
         except ValueError:
             self._send(400, b"Bad Content-Length\n", "text/plain; charset=utf-8")
-            return
+            return None
         if length < 0 or length > MAX_BODY_BYTES:
             self._send(413, b"Request body too large\n", "text/plain; charset=utf-8")
-            return
-        form = parse_form(self.rfile.read(length))
+            return None
+        return parse_form(self.rfile.read(length))
+
+    def _render_error(self, status: int, current: str, message: str) -> None:
+        """Render the page with an alert, listing tasks when possible."""
+        try:
+            tasks = self.client.list_tasks()
+        except CaldavError:
+            tasks = []
+        self._html(status, tasks, current, message)
+
+    def _toggle_task(self, form: dict[str, str], current: str) -> None:
         href = form.get("href", "")
-        current = form.get("list", ALL_LIST)
         completed = form.get("completed") == "1"
         if not is_safe_href(href, self.client.collection):
-            self._html(400, [], current, "Invalid task link.")
+            self._render_error(400, current, "Invalid task link.")
             return
         try:
             self.client.toggle(href, completed, now_utc())
         except CaldavError as exc:
-            try:
-                tasks = self.client.list_tasks()
-            except CaldavError:
-                tasks = []
-            self._html(502, tasks, current, str(exc))
+            self._render_error(502, current, str(exc))
+            return
+        location = redirect_location(current)
+        self._send(303, b"", "text/plain; charset=utf-8", {"Location": location})
+
+    def _add_task(self, form: dict[str, str], current: str) -> None:
+        summary = form.get("summary", "").strip()
+        category = form.get("category", "").strip()
+        if not summary:
+            self._render_error(400, current, "Summary is required.")
+            return
+        if len(summary) > MAX_SUMMARY_CHARS:
+            self._render_error(400, current, "Summary is too long.")
+            return
+        if len(category) > MAX_CATEGORY_CHARS:
+            self._render_error(400, current, "Category is too long.")
+            return
+        try:
+            self.client.add(summary, category, now_utc(), new_uid())
+        except CaldavError as exc:
+            self._render_error(502, current, str(exc))
             return
         location = redirect_location(current)
         self._send(303, b"", "text/plain; charset=utf-8", {"Location": location})

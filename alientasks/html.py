@@ -10,6 +10,9 @@ from alientasks.ical import Task, group_by_category
 
 ALL_LIST = ""
 
+MAX_SUMMARY_CHARS = 1000
+MAX_CATEGORY_CHARS = 200
+
 FAVICON_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
   <rect x="24" y="14" width="52" height="72" rx="8" fill="none"
         stroke="#00ff41" stroke-width="7"/>
@@ -52,6 +55,33 @@ def list_href(name: str) -> str:
 def open_count(tasks: list[Task]) -> int:
     """Count tasks that are not completed."""
     return sum(1 for task in tasks if not task.completed)
+
+
+def render_add_form(current_list: str, categories: list[str]) -> str:
+    """Render the add-task form."""
+    options = "".join(
+        f'<option value="{escape(name, quote=True)}"></option>' for name in categories
+    )
+    current = escape(current_list, quote=True)
+    return (
+        '<section class="add-task">'
+        '<h2 class="add-task__title">New task</h2>'
+        '<form class="add-task__form" method="post" action="/add">'
+        '<label class="add-task__field add-task__field--summary">'
+        '<span class="add-task__prompt">summary</span>'
+        f'<input class="add-task__input" type="text" name="summary" '
+        f'maxlength="{MAX_SUMMARY_CHARS}" autocomplete="off" required>'
+        "</label>"
+        '<label class="add-task__field">'
+        '<span class="add-task__prompt">category</span>'
+        f'<input class="add-task__input" type="text" name="category" '
+        f'maxlength="{MAX_CATEGORY_CHARS}" list="category-options" value="{current}">'
+        "</label>"
+        f'<datalist id="category-options">{options}</datalist>'
+        f'<input type="hidden" name="list" value="{current}">'
+        '<button class="add-task__submit" type="submit">add</button>'
+        "</form></section>"
+    )
 
 
 def render_nav(grouped: dict[str, list[Task]], current: str) -> str:
@@ -160,6 +190,7 @@ def render_page(
       </button>
     </header>
     {render_nav(grouped, current_list)}
+    {render_add_form(current_list, list(grouped))}
     <main>
       {error_html}
       {sections}

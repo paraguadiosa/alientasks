@@ -5,8 +5,10 @@ from alientasks.ical import (
     INBOX,
     NEEDS_ACTION,
     Task,
+    escape_ical,
     first_category,
     group_by_category,
+    new_todo_ical,
     parse_properties,
     parse_vtodo,
     toggle_ical,
@@ -115,6 +117,33 @@ def test_group_by_category_sorts_lists_and_done_last():
 
 def test_utc_stamp_format():
     assert utc_stamp(NOW) == "20260818T234000Z"
+
+
+def test_escape_ical_sequences():
+    assert escape_ical("a;b,c\\d\ne") == r"a\;b\,c\\d\ne"
+    assert escape_ical("plain") == "plain"
+    assert escape_ical("") == ""
+
+
+def test_new_todo_ical_builds_a_parsable_vtodo():
+    text = new_todo_ical("Water plants", "Garden", NOW, "abc123")
+    assert text.startswith("BEGIN:VCALENDAR")
+    assert "\r\n" in text
+    task = parse_vtodo("/eve/tasks/abc123.ics", '"e"', text)
+    assert task is not None
+    assert task.uid == "abc123"
+    assert task.summary == "Water plants"
+    assert task.category == "Garden"
+    assert task.completed is False
+
+
+def test_new_todo_ical_escapes_text_and_defaults_category():
+    text = new_todo_ical("A; B, C\\D", "", NOW, "x")
+    assert r"SUMMARY:A\; B\, C\\D" in text
+    assert f"CATEGORIES:{INBOX}" in text
+    assert "STATUS:NEEDS-ACTION" in text
+    assert "SEQUENCE:0" in text
+    assert "DTSTAMP:20260818T234000Z" in text
 
 
 def test_toggle_ical_completes_and_reopens():
