@@ -65,7 +65,8 @@ def test_render_page_filters_one_list_and_unknown_falls_back():
 
 def test_render_page_includes_light_theme_support():
     page = render_page([], "")
-    assert '[data-theme="light"]' in page
+    assert 'href="/static/style.css?v=' in page
+    assert 'src="/static/app.js?v=' in page
     assert 'class="theme-toggle"' in page
     assert 'name="color-scheme"' in page
     assert "alientasks-theme" in page
@@ -85,3 +86,11 @@ def test_render_page_empty_and_error():
     errored = render_page([], "", error="fallo <x>")
     assert 'role="alert"' in errored
     assert "fallo &lt;x&gt;" in errored
+
+
+def test_asset_url_is_versioned():
+    from alientasks import __version__
+    from alientasks.html import asset_url
+
+    assert asset_url("style.css") == f"/static/style.css?v={__version__}"
+    assert asset_url("app.js") == f"/static/app.js?v={__version__}"

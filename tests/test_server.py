@@ -130,6 +130,40 @@ def test_get_favicon():
     assert b"#00ff41" in rec.wfile.getvalue()
 
 
+def test_get_static_assets_are_cached():
+    rec = Recorder(DummyClient(), "/static/style.css?v=0.1.0")
+    rec.handle()
+    assert ("status", 200) in rec.sent
+    headers = dict(rec.sent[-1][1])
+    assert headers["Content-Type"] == "text/css; charset=utf-8"
+    assert headers["Cache-Control"] == "public, max-age=31536000, immutable"
+    assert b":root" in rec.wfile.getvalue()
+
+    rec = Recorder(DummyClient(), "/static/app.js?v=0.1.0")
+    rec.handle()
+    assert ("status", 200) in rec.sent
+    headers = dict(rec.sent[-1][1])
+    assert headers["Content-Type"] == "text/javascript; charset=utf-8"
+    assert b"theme-toggle" in rec.wfile.getvalue()
+
+
+def test_get_static_unknown_is_404():
+    for path in ["/static/nope.css", "/static/../server.py", "/static/style.css/../x"]:
+        rec = Recorder(DummyClient(), path)
+        rec.handle()
+        assert ("status", 404) in rec.sent
+
+
+def test_get_static_missing_file_is_404(monkeypatch):
+    def missing(name):
+        raise FileNotFoundError(name)
+
+    monkeypatch.setattr("alientasks.server.read_static", missing)
+    rec = Recorder(DummyClient(), "/static/style.css")
+    rec.handle()
+    assert ("status", 404) in rec.sent
+
+
 def test_post_toggle_redirects(monkeypatch):
     fixed = datetime(2026, 8, 18, 23, 40, tzinfo=UTC)
     monkeypatch.setattr("alientasks.server.now_utc", lambda: fixed)

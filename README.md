@@ -32,6 +32,10 @@ toggles the theme and stores the choice in `localStorage`. Without a stored
 choice, the page follows `prefers-color-scheme`. All light-theme text colors
 meet WCAG 2.2 AA contrast (>= 4.5:1).
 
+CSS and JS live in `alientasks/static/` and are served under `/static/` with
+cache-busted URLs (`?v=` + package version) and immutable caching. A tiny
+inline script applies the saved theme before first paint to avoid a flash.
+
 ## Flags
 
 - `--host` / `TASKS_UI_HOST` (default `127.0.0.1`)

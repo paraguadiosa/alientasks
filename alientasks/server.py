@@ -7,6 +7,7 @@ import os
 import sys
 from datetime import UTC, datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from importlib import resources
 from urllib.parse import parse_qs, urlparse, urlsplit
 
 from alientasks.caldav import CaldavClient, CaldavError, is_safe_href
@@ -19,6 +20,12 @@ DEFAULT_COLLECTION = "/eve/tasks/"
 DEFAULT_USER = "eve"
 
 MAX_BODY_BYTES = 64 * 1024
+
+STATIC_TYPES = {
+    "style.css": "text/css; charset=utf-8",
+    "app.js": "text/javascript; charset=utf-8",
+}
+STATIC_CACHE = "public, max-age=31536000, immutable"
 
 
 def now_utc():
@@ -59,6 +66,11 @@ def selected_list(query: dict[str, list[str]]) -> str:
     return values[-1] if values else ALL_LIST
 
 
+def read_static(name: str) -> bytes:
+    """Read one packaged static asset. Raise FileNotFoundError if absent."""
+    return (resources.files("alientasks") / "static" / name).read_bytes()
+
+
 class TasksHandler(BaseHTTPRequestHandler):
     """Serve the list page and accept checkbox toggles."""
 
@@ -73,11 +85,11 @@ class TasksHandler(BaseHTTPRequestHandler):
         return self.server.client  # type: ignore[attr-defined]
 
     def _send(self, status: int, body: bytes, content_type: str, extra=None) -> None:
+        headers = {"Cache-Control": "no-store", **(extra or {})}
         self.send_response(status)
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(body)))
-        self.send_header("Cache-Control", "no-store")
-        for key, value in (extra or {}).items():
+        for key, value in headers.items():
             self.send_header(key, value)
         self.end_headers()
         self.wfile.write(body)
@@ -86,10 +98,25 @@ class TasksHandler(BaseHTTPRequestHandler):
         page = render_page(tasks, current, error)
         self._send(status, page.encode(), "text/html; charset=utf-8")
 
+    def _send_static(self, name: str) -> bool:
+        """Serve a whitelisted static asset. Return True when served."""
+        if name not in STATIC_TYPES:
+            return False
+        try:
+            body = read_static(name)
+        except FileNotFoundError:
+            return False
+        self._send(200, body, STATIC_TYPES[name], {"Cache-Control": STATIC_CACHE})
+        return True
+
     def do_GET(self) -> None:
         parsed = urlparse(self.path)
         if parsed.path == "/favicon.svg":
             self._send(200, FAVICON_SVG.encode(), "image/svg+xml")
+            return
+        if parsed.path.startswith("/static/"):
+            if not self._send_static(parsed.path.removeprefix("/static/")):
+                self._send(404, b"Not found\n", "text/plain; charset=utf-8")
             return
         if parsed.path != "/":
             self._send(404, b"Not found\n", "text/plain; charset=utf-8")
