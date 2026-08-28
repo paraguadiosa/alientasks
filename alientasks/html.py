@@ -185,9 +185,12 @@ def render_page(
         <h1 class="app__title">Alientasks</h1>
         <p class="app__meta">{total_open} open</p>
       </div>
-      <button type="button" class="theme-toggle" aria-pressed="false">
-        Light mode
-      </button>
+      <div class="app__header-actions">
+        <a class="app__habits-link" href="http://mini.tail66290a.ts.net:8081/" target="_blank" rel="noopener">Habits</a>
+        <button type="button" class="theme-toggle" aria-pressed="false">
+          Light mode
+        </button>
+      </div>
     </header>
     {render_nav(grouped, current_list)}
     {render_add_form(current_list, list(grouped))}
