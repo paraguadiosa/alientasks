@@ -8,9 +8,9 @@ REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 TAILSCALE_IP="$(tailscale ip -4)"
 ENV_FILE="$HOME/.config/alientasks/env"
 
-if [ ! -x /usr/bin/socat ] || ! python3 -m venv --help >/dev/null 2>&1; then
+if ! python3 -m venv --help >/dev/null 2>&1; then
     sudo apt-get update -qq
-    sudo apt-get install -y -qq socat python3-venv
+    sudo apt-get install -y -qq python3-venv
 fi
 
 # Radicale, same version as the reference machine.
@@ -33,8 +33,6 @@ render "$REPO_DIR/deploy/radicale.service" \
     "$HOME/.config/systemd/user/radicale.service"
 render "$REPO_DIR/deploy/alientasks.service" \
     "$HOME/.config/systemd/user/alientasks.service"
-render "$REPO_DIR/deploy/alientasks-tailscale.service" \
-    "$HOME/.config/systemd/user/alientasks-tailscale.service"
 
 if [ ! -f "$ENV_FILE" ]; then
     if [ -n "${1:-}" ]; then
@@ -54,10 +52,11 @@ fi
 systemctl --user daemon-reload
 systemctl --user enable --now radicale.service
 systemctl --user enable --now alientasks.service
-systemctl --user enable --now alientasks-tailscale.service
 loginctl enable-linger "$USER" 2>/dev/null || sudo loginctl enable-linger "$USER"
 
-# HTTPS front for the UI, best effort. Needs sudo on some nodes.
+# HTTPS (TLS) front for the UI, best effort. Needs sudo on some nodes.
+# Este es el UNICO frente de exposicion al tailnet: el socat en texto plano
+# (alientasks-tailscale.service) fue retirado por redundante.
 sudo tailscale serve --bg 5233 >/dev/null 2>&1 || \
     tailscale serve --bg 5233 >/dev/null 2>&1 || \
     echo "NOTE: 'tailscale serve --bg 5233' failed. Set it up manually." >&2
