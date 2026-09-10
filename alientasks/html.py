@@ -186,7 +186,9 @@ def render_page(
         <p class="app__meta">{total_open} open</p>
       </div>
       <div class="app__header-actions">
-        <a class="app__habits-link" href="http://mini.tail66290a.ts.net:8081/" target="_blank" rel="noopener">Habits</a>
+        <a class="app__habits-link"
+           href="http://mini.paraguadiosa.com:8081/"
+           target="_blank" rel="noopener">Habits</a>
         <button type="button" class="theme-toggle" aria-pressed="false">
           Light mode
         </button>
